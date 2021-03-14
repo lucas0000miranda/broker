@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  postgres:
+    # In production, you may want to use a managed database service
+    image: postgres:9.6-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=helloprint
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/var/lib/postgresql/data/db-files/
+    volumes:
+      - /home/lucas0000miranda/Projects/helloprint/ch:/var/lib/postgresql/data
+    # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+    # - ./docker/db/data:/var/lib/postgresql/data:rw
+    ports:
+      - "5432:5432"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    network_mode: host
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+    extra_hosts:
+      - "moby:127.0.0.1"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    network_mode: host
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: localhost:32181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    extra_hosts:
+      - "moby:127.0.0.1"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8888:8888
